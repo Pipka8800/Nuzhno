@@ -8,8 +8,7 @@
 </head>
     <div class="login">
         <form>
-            <h1 class="login-title">Пользователь</h1>
-            <h2 class="login-title">Сброс пароля</h1>
+            <h1 class="login-title">Сброс пароля</h1>
             <label for="password">
                 Введите пароль
                 <span class="error">Необходимо заполнить</span>
