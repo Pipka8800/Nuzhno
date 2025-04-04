@@ -1,0 +1,8 @@
+CREATE TABLE users (
+	id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(256),
+    surname VARCHAR(256),
+    type ENUM('user','admin'),
+    blocked ENUM('0','1'),
+    token VARCHAR(256)
+);
