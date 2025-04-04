@@ -26,4 +26,48 @@ form {
     text-align: center;
 }
 
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #808080;
+    border-radius: 10px;
+}
+
+.add-button {
+    background-color: #e0e0e0;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 18px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    margin: 0 auto 20px; 
+    display: block;
+}
+
+table {
+    width: 100%;
+    border-spacing: 0 10px;
+}
+
+tr {
+    background-color: #e0e0e0;
+}
+
+td, th {
+    padding: 10px;
+    text-align: left;
+}
+
+.action-button {
+    background-color: #e0e0e0;
+    border: 1px solid #808080;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 5px;
+    cursor: pointer;
+}
+
 
