@@ -83,7 +83,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['logout'])) {
     <div class="login">
         <form method="post" action="">
             <h1 class="login-title">Сброс пароля</h1>
-            <p style="text-align: center; margin-bottom: 20px;">
+            <p class="login-p">
                 <?php 
                 echo htmlspecialchars($user[0]['name'] . ' ' . $user[0]['surname']);
                 echo ' / ';
