@@ -14,7 +14,7 @@ if(!isset($_SESSION['token']) || empty($_SESSION['token'])) {
 
 // Проверка типа пользователя
 $token = $_SESSION['token'];
-$user = $db->query("SELECT id, type FROM users WHERE token = '$token'")->fetchAll();
+$user = $db->query("SELECT id, type, name, surname FROM users WHERE token = '$token'")->fetchAll();
 
 if(!empty($user)){
     $userType = $user[0]['type'];
@@ -83,6 +83,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['logout'])) {
     <div class="login">
         <form method="post" action="">
             <h1 class="login-title">Сброс пароля</h1>
+            <p style="text-align: center; margin-bottom: 20px;">
+                <?php 
+                echo htmlspecialchars($user[0]['name'] . ' ' . $user[0]['surname']);
+                echo ' / ';
+                echo $user[0]['type'] === 'admin' ? 'Администратор' : 'Пользователь';
+                ?>
+            </p>
             <label for="password">
                 Введите пароль
                 <?php if(isset($errors['password'])): ?>

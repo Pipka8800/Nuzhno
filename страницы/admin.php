@@ -14,7 +14,7 @@ if(!isset($_SESSION['token']) || empty($_SESSION['token'])) {
 
 // Проверка прав администратора
 $token = $_SESSION['token'];
-$user = $db->query("SELECT id, type FROM users WHERE token = '$token'")->fetchAll();
+$user = $db->query("SELECT id, type, name, surname FROM users WHERE token = '$token'")->fetchAll();
 
 if(empty($user) || $user[0]['type'] !== 'admin') {
     header('Location: login.php');
@@ -46,6 +46,15 @@ if(isset($_POST['logout'])) {
         <form method="post" class="logout-button">
             <button type="submit" name="logout">Выйти из аккаунта</button>
         </form>
+        <?php if(!empty($user)): ?>
+            <p style="text-align: center; margin-bottom: 20px;">
+                <?php 
+                echo htmlspecialchars($user[0]['name'] . ' ' . $user[0]['surname']);
+                echo ' / ';
+                echo $user[0]['type'] === 'admin' ? 'Администратор' : 'Пользователь';
+                ?>
+            </p>
+        <?php endif; ?>
         
         <button class="add-button">+Добавить</button>
         
