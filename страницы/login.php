@@ -13,10 +13,33 @@ $db = new PDO('mysql:host=localhost;dbname=demka', 'root', null,
 if(isset($_SESSION['token']) && !empty($_SESSION['token'])){
     $token = $_SESSION['token'];
     // запрос на получение пользователя по токену
-    $user = $db->query("SELECT id, type FROM users WHERE token = '$token'")->fetchAll();
+    $user = $db->query("SELECT id, type, blocked, latest FROM users WHERE token = '$token'")->fetchAll();
 
     // если пользователь есть
     if(!empty($user)){
+        // Проверяем, не прошло ли больше месяца с последней активности
+        if($user[0]['latest']) {
+            $lastActivity = new DateTime($user[0]['latest']);
+            $now = new DateTime();
+            $interval = $now->diff($lastActivity);
+            
+            if($interval->m >= 1) {
+                // Блокируем пользователя
+                $stmt = $db->prepare("UPDATE users SET blocked = 1 WHERE id = ?");
+                $stmt->execute([$user[0]['id']]);
+                session_destroy();
+                header('Location: login.php');
+                exit();
+            }
+        }
+
+        if($user[0]['blocked']) {
+            session_destroy();
+            $_SESSION['error'] = 'Пользователь заблокирован, обратитесь к администрации';
+            header('Location: login.php');
+            exit();
+        }
+
         $userType = $user[0]['type'];
         $isAdmin = $userType == 'admin';
         $isUser = $userType == 'user';
@@ -49,28 +72,50 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     // Если ошибок нет, проверяем данные в БД
     if(empty($errors)) {
         // 3. Сравниваем значения с БД
-        $stmt = $db->prepare("SELECT id, type, password FROM users WHERE login = ?");
+        $stmt = $db->prepare("SELECT id, type, password, blocked, amountAttempt FROM users WHERE login = ?");
         $stmt->execute([$login]);
         $user = $stmt->fetch();
         
-        if($user && $password === $user['password']) { // В реальном проекте используйте password_verify()
-            // Генерируем новый токен
-            $token = bin2hex(random_bytes(32));
-            
-            // Сохраняем токен в БД
-            $stmt = $db->prepare("UPDATE users SET token = ? WHERE id = ?");
-            $stmt->execute([$token, $user['id']]);
-            
-            // Сохраняем токен в сессии
-            $_SESSION['token'] = $token;
-            
-            // Редиректим на нужную страницу
-            if($user['type'] === 'admin') {
-                header('Location: admin.php');
+        if($user) {
+            // Проверяем блокировку
+            if($user['blocked']) {
+                $errors['auth'] = 'Пользователь заблокирован, обратитесь к администрации';
+            } else if($password === $user['password']) { // В реальном проекте используйте password_verify()
+                // Сбрасываем количество попыток при успешном входе
+                $stmt = $db->prepare("UPDATE users SET amountAttempt = 0 WHERE id = ?");
+                $stmt->execute([$user['id']]);
+                
+                // Генерируем новый токен
+                $token = bin2hex(random_bytes(32));
+                
+                // Сохраняем токен и обновляем время последнего входа
+                $stmt = $db->prepare("UPDATE users SET token = ?, latest = NOW() WHERE id = ?");
+                $stmt->execute([$token, $user['id']]);
+                
+                // Сохраняем токен в сессии
+                $_SESSION['token'] = $token;
+                
+                // Редиректим на нужную страницу
+                if($user['type'] === 'admin') {
+                    header('Location: admin.php');
+                } else {
+                    header('Location: user.php');
+                }
+                exit();
             } else {
-                header('Location: user.php');
+                // Увеличиваем счетчик неудачных попыток
+                $newAttempt = $user['amountAttempt'] + 1;
+                if($newAttempt >= 3) {
+                    // Блокируем пользователя
+                    $stmt = $db->prepare("UPDATE users SET blocked = 1, amountAttempt = ? WHERE id = ?");
+                    $stmt->execute([$newAttempt, $user['id']]);
+                    $errors['auth'] = 'Пользователь заблокирован, обратитесь к администрации';
+                } else {
+                    $stmt = $db->prepare("UPDATE users SET amountAttempt = ? WHERE id = ?");
+                    $stmt->execute([$newAttempt, $user['id']]);
+                    $errors['auth'] = 'Неверный логин/пароль';
+                }
             }
-            exit();
         } else {
             $errors['auth'] = 'Неверный логин/пароль';
         }
@@ -89,6 +134,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     <title>Авторизация</title>
 </head>
     <div class="login">
+        <?php if(isset($_SESSION['error'])): ?>
+            <div class="error-message">
+                <h2><?php echo $_SESSION['error']; ?></h2>
+                <?php unset($_SESSION['error']); ?>
+            </div>
+        <?php else: ?>
         <form action="login.php" method="post">
             <h1 class="login-title">Авторизация</h1>
             <label for="login">
@@ -110,6 +161,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
                 <p class="error"><?php echo $errors['auth']; ?></p>
             <?php endif; ?>
         </form>
+        <?php endif; ?>
     </div>
 </body>
 </html>

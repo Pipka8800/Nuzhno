@@ -12,14 +12,19 @@ if(!isset($_SESSION['token']) || empty($_SESSION['token'])) {
     exit();
 }
 
-// Проверка типа пользователя
+// Проверка типа пользователя и обновление времени последнего посещения
 $token = $_SESSION['token'];
-$user = $db->query("SELECT id, type, name, surname FROM users WHERE token = '$token'")->fetchAll();
+$user = $db->query("SELECT id, type, name, surname, blocked FROM users WHERE token = '$token'")->fetchAll();
+
+// Обновляем время последнего посещения
+$updateLatest = $db->prepare("UPDATE users SET latest = NOW() WHERE token = ?");
+$updateLatest->execute([$token]);
 
 if(!empty($user)){
     $userType = $user[0]['type'];
     $isAdmin = $userType == 'admin';
     $isUser = $userType == 'user';
+    $isBlocked = $user[0]['blocked'];
 
     // Если админ, перенаправляем на страницу админа
     if($isAdmin) {
@@ -81,6 +86,11 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['logout'])) {
 </head>
 <body>
     <div class="login">
+        <?php if($isBlocked): ?>
+            <div class="error-message">
+                <h2>Пользователь заблокирован, обратитесь к администрации</h2>
+            </div>
+        <?php else: ?>
         <form method="post" action="">
             <h1 class="login-title">Сброс пароля</h1>
             <p class="login-p">
@@ -110,6 +120,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['logout'])) {
             <?php endif; ?>
             <button type="submit" name="logout">Выйти из аккаунта</button>
         </form>
+        <?php endif; ?>
     </div>
 </body>
 </html>
