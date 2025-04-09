@@ -146,8 +146,7 @@ if(isset($_POST['toggle_block']) && isset($_POST['user_id'])) {
         <?php endif; ?>
         
         <div class="action-buttons">
-            <button class="add-button" onclick="document.getElementById('addForm').style.display = 'block'; document.getElementById('editForm').style.display = 'none';">Добавить пользователя</button>
-            <button class="edit-button" onclick="document.getElementById('editForm').style.display = 'block'; document.getElementById('addForm').style.display = 'none';">Редактировать</button>
+            <button class="add-button" onclick="toggleForm('addForm')">Добавить пользователя</button>
         </div>
 
         <!-- Форма добавления пользователя -->
@@ -208,7 +207,7 @@ if(isset($_POST['toggle_block']) && isset($_POST['user_id'])) {
             <form method="post" action="">
                 <div class="form-group">
                     <label>Выберите пользователя:</label>
-                    <select name="user_id" onchange="this.form.submit()">
+                    <select name="user_id">
                         <option value="">Выберите пользователя</option>
                         <?php foreach($users as $u): ?>
                             <option value="<?php echo $u['id']; ?>" <?php echo ($editUserId == $u['id']) ? 'selected' : ''; ?>>
@@ -218,33 +217,30 @@ if(isset($_POST['toggle_block']) && isset($_POST['user_id'])) {
                     </select>
                 </div>
 
-                <?php if($editUser): ?>
-                    <div class="form-group">
-                        <label>Имя:
-                            <?php if(isset($errors['edit_name'])): ?>
-                                <span class="error"><?php echo $errors['edit_name']; ?></span>
-                            <?php endif; ?>
-                        </label>
-                        <input type="text" name="name" value="<?php echo htmlspecialchars($editUser['name']); ?>">
-                    </div>
+                <div class="form-group">
+                    <label>Имя:
+                        <?php if(isset($errors['edit_name'])): ?>
+                            <span class="error"><?php echo $errors['edit_name']; ?></span>
+                        <?php endif; ?>
+                    </label>
+                    <input type="text" name="name" value="<?php echo isset($editUser['name']) ? htmlspecialchars($editUser['name']) : ''; ?>">
+                </div>
 
-                    <div class="form-group">
-                        <label>Фамилия:
-                            <?php if(isset($errors['edit_surname'])): ?>
-                                <span class="error"><?php echo $errors['edit_surname']; ?></span>
-                            <?php endif; ?>
-                        </label>
-                        <input type="text" name="surname" value="<?php echo htmlspecialchars($editUser['surname']); ?>">
-                    </div>
+                <div class="form-group">
+                    <label>Фамилия:
+                        <?php if(isset($errors['edit_surname'])): ?>
+                            <span class="error"><?php echo $errors['edit_surname']; ?></span>
+                        <?php endif; ?>
+                    </label>
+                    <input type="text" name="surname" value="<?php echo isset($editUser['surname']) ? htmlspecialchars($editUser['surname']) : ''; ?>">
+                </div>
 
-                    <div class="form-group">
-                        <label>Новый пароль (оставьте пустым, чтобы не менять):</label>
-                        <input type="password" name="password">
-                    </div>
+                <div class="form-group">
+                    <label>Новый пароль (оставьте пустым, чтобы не менять):</label>
+                    <input type="password" name="password">
+                </div>
 
-                    <input type="hidden" name="user_id" value="<?php echo $editUser['id']; ?>">
-                    <button type="submit" name="edit_user" class="submit-button">Сохранить изменения</button>
-                <?php endif; ?>
+                <button type="submit" name="edit_user" class="submit-button">Сохранить изменения</button>
             </form>
         </div>
         
@@ -274,10 +270,55 @@ if(isset($_POST['toggle_block']) && isset($_POST['user_id'])) {
                                 <?php echo $u['blocked'] ? 'Разблокировать' : 'Заблокировать'; ?>
                             </button>
                         </form>
+                        <button onclick="toggleEditForm(<?php echo htmlspecialchars(json_encode([
+                            'id' => $u['id'],
+                            'name' => $u['name'],
+                            'surname' => $u['surname']
+                        ])); ?>)" class="edit-button">
+                            Редактировать
+                        </button>
                     </td>
                 </tr>
             <?php endforeach; ?>
         </table>
     </div>
+
+    <script>
+    function toggleForm(formId) {
+        const form = document.getElementById(formId);
+        const otherForm = formId === 'addForm' ? document.getElementById('editForm') : document.getElementById('addForm');
+        
+        if(form.style.display === 'block') {
+            form.style.display = 'none';
+        } else {
+            form.style.display = 'block';
+            otherForm.style.display = 'none';
+        }
+    }
+
+    function toggleEditForm(userData) {
+        const editForm = document.getElementById('editForm');
+        const addForm = document.getElementById('addForm');
+        
+        // Если форма уже открыта и это тот же пользователь - закрываем её
+        if(editForm.style.display === 'block' && 
+           document.querySelector('#editForm select[name="user_id"]').value === userData.id.toString()) {
+            editForm.style.display = 'none';
+            return;
+        }
+        
+        // Иначе показываем форму и заполняем данными
+        editForm.style.display = 'block';
+        addForm.style.display = 'none';
+        
+        // Заполняем поля формы
+        document.querySelector('#editForm select[name="user_id"]').value = userData.id;
+        document.querySelector('#editForm input[name="name"]').value = userData.name;
+        document.querySelector('#editForm input[name="surname"]').value = userData.surname;
+        
+        // Прокручиваем к форме
+        editForm.scrollIntoView({ behavior: 'smooth' });
+    }
+    </script>
 </body>
 </html>

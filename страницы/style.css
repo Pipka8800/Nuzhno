@@ -171,11 +171,21 @@ tr:hover {
 }
 
 /* Кнопки блокировки/разблокировки */
-.block-button, .unblock-button {
+.block-button, .unblock-button, td .edit-button {
     padding: 8px 16px;
     border-radius: 4px;
     font-size: 13px;
     font-weight: 500;
+    margin: 2px;
+}
+
+td .edit-button {
+    background-color: #2196F3;
+    color: white;
+}
+
+td .edit-button:hover {
+    background-color: #1976D2;
 }
 
 .block-button {
@@ -194,6 +204,16 @@ tr:hover {
 
 .unblock-button:hover {
     background-color: #388E3C;
+}
+
+/* Действия в таблице */
+td form {
+    display: inline-block;
+    margin: 2px;
+}
+
+td {
+    white-space: nowrap;
 }
 
 /* Формы в админке */
